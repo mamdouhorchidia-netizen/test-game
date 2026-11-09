@@ -20,18 +20,24 @@ jobs:
           java-version: '17'
 
       - name: Check every level is solvable
-        run: node tools/check-levels.js
+        run: |
+          node tools/check-levels.js
+          node tools/check-closecall.js
 
-      - name: Build signed APK
+      - name: Build signed APKs
         run: ./gradlew --no-daemon assembleRelease
 
-      - name: Rename APK
-        run: cp app/build/outputs/apk/release/app-release.apk GravityJanitor.apk
+      - name: Rename APKs
+        run: |
+          cp app/build/outputs/apk/release/app-release.apk GravityJanitor.apk
+          cp closecall/build/outputs/apk/release/closecall-release.apk CloseCall.apk
 
       - uses: actions/upload-artifact@v4
         with:
-          name: GravityJanitor-apk
-          path: GravityJanitor.apk
+          name: apks
+          path: |
+            GravityJanitor.apk
+            CloseCall.apk
 
       - name: Publish as the "latest" release
         env:
@@ -39,7 +45,7 @@ jobs:
         run: |
           gh release delete latest --cleanup-tag --yes || true
           sleep 3
-          gh release create latest GravityJanitor.apk \
+          gh release create latest CloseCall.apk GravityJanitor.apk \
             --target "$GITHUB_SHA" \
-            --title "Gravity Janitor (latest build)" \
-            --notes "Automatic build of commit $GITHUB_SHA. Download GravityJanitor.apk on an Android phone (Android 8 or newer) and open it to install."
+            --title "Latest builds" \
+            --notes "Automatic build of commit $GITHUB_SHA. Download CloseCall.apk or GravityJanitor.apk on an Android phone (Android 8 or newer) and open it to install."

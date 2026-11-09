@@ -13,4 +13,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = 'GravityJanitor'
-include ':app'
+include ':app', ':closecall'

@@ -1,0 +1,45 @@
+name: Build APK
+
+on:
+  push:
+    branches: ['**']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Check every level is solvable
+        run: node tools/check-levels.js
+
+      - name: Build signed APK
+        run: ./gradlew --no-daemon assembleRelease
+
+      - name: Rename APK
+        run: cp app/build/outputs/apk/release/app-release.apk GravityJanitor.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GravityJanitor-apk
+          path: GravityJanitor.apk
+
+      - name: Publish as the "latest" release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete latest --cleanup-tag --yes || true
+          sleep 3
+          gh release create latest GravityJanitor.apk \
+            --target "$GITHUB_SHA" \
+            --title "Gravity Janitor (latest build)" \
+            --notes "Automatic build of commit $GITHUB_SHA. Download GravityJanitor.apk on an Android phone (Android 8 or newer) and open it to install."
